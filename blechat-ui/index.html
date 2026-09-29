@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>BLE Chat - Bluetooth Low Energy Messenger</title>
+  <meta name="description" content="Decentralized Bluetooth Low Energy mesh chat application." />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Phosphor Icons -->
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/regular/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/fill/style.css">
+  
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body class="theme-cool-blue">
+  <div class="bg-mesh-glow"></div>
+  <div class="bg-grid-lines"></div>
+
+  <!-- Global Header -->
+  <header class="global-navbar">
+    <div class="brand-group">
+      <div class="brand-logo-hex">
+        <i class="ph ph-bluetooth-connected"></i>
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-title">BLE CHAT</h1>
+        <p class="brand-subtitle">Bluetooth Low Energy Messenger</p>
+      </div>
+    </div>
+
+    <!-- Telemetry & Identity -->
+    <div class="mesh-telemetry-strip">
+      <div class="telemetry-item" title="Bluetooth Radio Status">
+        <span class="status-pulse active" id="mesh-pulse-indicator"></span>
+        <span class="telemetry-label">RADIO:</span>
+        <span class="telemetry-value text-cyan" id="global-mesh-status">LISTENING</span>
+      </div>
+
+      <button class="telemetry-item btn-edit-id" id="btn-edit-my-id" title="Edit Nickname & Node ID">
+        <i class="ph ph-fingerprint text-sky"></i>
+        <span class="telemetry-label">MY ID:</span>
+        <span class="telemetry-value font-mono text-cyan" id="my-peer-id-display">7f9e:8a12</span>
+        <span class="badge-edit-pill"><i class="ph ph-pencil-simple"></i> Edit</span>
+      </button>
+    </div>
+
+    <div class="global-actions">
+      <button class="btn-icon-glass" id="btn-toggle-view" title="Toggle Viewport Frame">
+        <i class="ph ph-device-mobile"></i>
+        <span class="btn-text">Full Screen</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- App Viewport Container -->
+  <main class="app-viewport mobile-frame" id="app-viewport">
+    
+    <!-- Phone Top Status Bar -->
+    <div class="device-status-notch">
+      <span class="status-time" id="device-clock">09:41</span>
+      <div class="notch-cutout"></div>
+      <div class="device-indicators">
+        <i class="ph ph-bluetooth-bold text-cyan" title="Bluetooth Active"></i>
+        <i class="ph ph-battery-charging-vertical-bold text-sky" title="Battery Status"></i>
+      </div>
+    </div>
+
+    <!-- App Inner Frame -->
+    <div class="app-container">
+      
+      <!-- Drawer Backdrop Overlay (click to close any open drawer) -->
+      <div class="drawer-overlay" id="drawer-overlay"></div>
+
+      <!-- Top App Header -->
+      <nav class="app-header">
+        <div class="header-left">
+          <button class="header-nav-btn" id="btn-open-channels" title="Channels & Chats">
+            <i class="ph ph-list-bold"></i>
+          </button>
+          
+          <div class="current-channel-info">
+            <div class="channel-title-row">
+              <span class="channel-icon" id="header-chan-icon"><i class="ph-fill ph-broadcast"></i></span>
+              <h2 class="channel-name" id="header-chan-name">mesh #bluetooth</h2>
+            </div>
+            <div class="channel-meta-row">
+              <span class="badge-cipher" id="header-chan-badge">FLOOD ROUTING</span>
+              <span class="meta-sep">•</span>
+              <span class="hop-indicator" id="header-peer-count">0 peers in radio range</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button class="header-action-btn" id="btn-open-peers" title="Peers in Radio Range">
+            <i class="ph ph-users-three-bold"></i>
+            <span class="badge-count" id="header-peer-badge">0</span>
+          </button>
+          <button class="header-action-btn" id="btn-open-identity" title="Identity Settings">
+            <i class="ph ph-user-circle-gear-bold"></i>
+          </button>
+        </div>
+      </nav>
+
+      <!-- Channels Drawer -->
+      <aside class="sidebar-drawer" id="channels-drawer">
+        <div class="drawer-header">
+          <h3 class="drawer-title">Channels</h3>
+          <button class="drawer-close-btn" id="btn-close-channels" title="Close Channels Drawer">
+            <i class="ph ph-x-bold"></i>
+          </button>
+        </div>
+
+        <div class="drawer-scrollable">
+          <!-- Section: Bluetooth Mesh Channels -->
+          <div class="channel-section">
+            <div class="section-title">
+              <span>LOCAL BROADCAST CHANNELS</span>
+            </div>
+            <ul class="channel-list">
+              <li class="channel-item active" data-channel-type="mesh" data-channel-id="bluetooth">
+                <div class="item-icon-box bg-blue-glow"><i class="ph-fill ph-broadcast"></i></div>
+                <div class="item-content">
+                  <div class="item-top">
+                    <span class="item-name">mesh #bluetooth</span>
+                  </div>
+                  <div class="item-preview">Public local mesh broadcast room</div>
+                </div>
+              </li>
+              <li class="channel-item" data-channel-type="mesh" data-channel-id="sos">
+                <div class="item-icon-box bg-red-glow"><i class="ph-fill ph-warning-circle"></i></div>
+                <div class="item-content">
+                  <div class="item-top">
+                    <span class="item-name">mesh #emergency-sos</span>
+                  </div>
+                  <div class="item-preview">High-priority broadcast channel</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Section: Location Channels -->
+          <div class="channel-section">
+            <div class="section-title">
+              <span>LOCATION CHANNELS (GEOHASH)</span>
+            </div>
+            <ul class="channel-list">
+              <li class="channel-item" data-channel-type="geohash" data-channel-id="block-local">
+                <div class="item-icon-box bg-cyan-glow"><i class="ph ph-map-pin"></i></div>
+                <div class="item-content">
+                  <div class="item-top">
+                    <span class="item-name">block #dr5rsj7</span>
+                    <span class="item-tag">150m</span>
+                  </div>
+                  <div class="item-preview">City-block geographic area</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Section: Direct Chats -->
+          <div class="channel-section">
+            <div class="section-title">
+              <span>DIRECT MESSAGES</span>
+            </div>
+            <ul class="channel-list" id="dm-channel-list">
+              <li class="channel-empty-hint" id="dm-empty-hint">
+                No active direct chats. Select a discovered peer from the peers list.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Connected Peers Drawer with Top-Right Close Button -->
+      <aside class="sidebar-drawer right-drawer" id="peers-drawer">
+        <div class="drawer-header">
+          <h3 class="drawer-title"><i class="ph ph-users-three text-cyan"></i> Peers in Radio Range</h3>
+          <button class="drawer-close-btn" id="btn-close-peers" title="Return to Chat">
+            <i class="ph ph-x-bold"></i>
+          </button>
+        </div>
+
+        <div class="drawer-scrollable" id="peers-list-container">
+          <div class="empty-peers-notice" id="empty-peers-notice">
+            <div class="empty-icon-wrap">
+              <i class="ph ph-broadcast text-cyan text-3xl"></i>
+            </div>
+            <h4>Listening for Nearby Nodes</h4>
+            <p>No other peers detected in radio range. Open this application in another browser tab or device to connect.</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Chat Feed -->
+      <section class="chat-feed-container">
+        
+        <!-- Messages Scroll Area -->
+        <div class="messages-scroll-area" id="messages-scroll-area">
+          <div class="messages-content" id="messages-stream">
+            <!-- Messages rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Network Ticker -->
+        <div class="network-event-ticker" id="network-ticker">
+          <div class="ticker-content">
+            <span class="pulse-node"></span>
+            <span id="ticker-text">[BLE Service] Bluetooth GATT interface active</span>
+          </div>
+          <span class="ticker-crypto font-mono">Channel Ready</span>
+        </div>
+
+        <!-- Slash Commands Autocomplete Popup -->
+        <div class="slash-commands-bar" id="slash-popup">
+          <div class="slash-item" data-cmd="/who">
+            <span class="cmd-name">/who</span>
+            <span class="cmd-desc">List all discovered nodes in radio range</span>
+          </div>
+          <div class="slash-item" data-cmd="/nick">
+            <span class="cmd-name">/nick &lt;new_name&gt;</span>
+            <span class="cmd-desc">Change your broadcast nickname</span>
+          </div>
+          <div class="slash-item" data-cmd="/slap">
+            <span class="cmd-name">/slap &lt;peer&gt;</span>
+            <span class="cmd-desc">IRC-style action message</span>
+          </div>
+          <div class="slash-item" data-cmd="/ping">
+            <span class="cmd-name">/ping &lt;peer&gt;</span>
+            <span class="cmd-desc">Measure roundtrip packet latency</span>
+          </div>
+          <div class="slash-item" data-cmd="/clear">
+            <span class="cmd-name">/clear</span>
+            <span class="cmd-desc">Clear local message screen</span>
+          </div>
+        </div>
+
+        <!-- Composer Input Area -->
+        <div class="composer-container">
+          <div class="composer-glass-box">
+            
+            <div class="composer-top-tools">
+              <button class="tool-btn" id="btn-show-qr-verify" title="View Verification Fingerprint">
+                <i class="ph ph-qr-code-bold"></i>
+              </button>
+              <button class="tool-btn" id="btn-edit-nick-tool" title="Change Nickname">
+                <i class="ph ph-user-circle-bold"></i>
+              </button>
+              <button class="tool-btn text-cyan" id="btn-quick-slash" title="Commands">
+                <i class="ph ph-terminal-window-bold"></i>
+              </button>
+              <div class="char-countdown font-mono" id="char-counter">512B MTU</div>
+            </div>
+
+            <div class="composer-input-row">
+              <textarea 
+                id="message-input" 
+                rows="1" 
+                placeholder="Type a message or /command..."
+                autocomplete="off"
+              ></textarea>
+              
+              <button class="btn-send-message" id="btn-send" title="Send Packet">
+                <i class="ph-fill ph-paper-plane-tilt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Edit Identity Modal -->
+    <div class="modal-backdrop" id="modal-identity">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i class="ph ph-fingerprint text-cyan"></i> Edit Node Identity</h3>
+          <button class="btn-modal-close" id="btn-close-identity"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Display Nickname</label>
+            <input type="text" id="input-nickname" class="form-input" placeholder="Enter nickname..." maxlength="24" />
+          </div>
+          
+          <div class="form-group" style="margin-top: 14px;">
+            <label class="form-label">Custom Node ID (Format: xxxx:xxxx)</label>
+            <div class="input-with-button">
+              <input type="text" id="input-peer-id" class="form-input font-mono" placeholder="7f9e:8a12" maxlength="9" />
+              <button class="btn-action-inline" id="btn-gen-random-id" title="Generate New Node ID">
+                <i class="ph ph-arrows-clockwise"></i> Random
+              </button>
+            </div>
+          </div>
+
+          <div class="crypto-meta-box" style="margin-top: 16px;">
+            <span class="text-xs text-muted">Node Cryptographic Fingerprint:</span>
+            <div class="font-mono text-cyan text-xs" id="display-static-key" style="word-break: break-all; margin-top: 4px;">
+              04a3f9e1208bcd4901eeaa62719c82df091104e8b39401726a8041d8e6f1a093
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary-glass" id="btn-cancel-identity">Cancel</button>
+          <button class="btn-primary-blue" id="btn-save-identity">Save & Update</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Fingerprint Modal -->
+    <div class="modal-backdrop" id="modal-qr">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3><i class="ph ph-qr-code text-cyan"></i> Node Verification</h3>
+          <button class="btn-modal-close" id="btn-close-qr"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="modal-body text-center">
+          <p class="modal-desc">Node identification fingerprint for peer verification.</p>
+          <div class="qr-mockup-frame">
+            <div class="qr-matrix"></div>
+          </div>
+          <div class="fingerprint-display font-mono" id="my-full-fingerprint">
+            SHA256: 7F9E:8A12:C3D4:E5F6:7890:ABCD:EF01:2345:6789:55AA
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary-blue w-full" id="btn-confirm-qr">Done</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
